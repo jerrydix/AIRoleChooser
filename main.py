@@ -6,8 +6,6 @@ import vertexai
 from vertexai.generative_models import GenerativeModel
 from nicegui import ui
 
-response = ""
-
 # List of specializations
 specializations = ["Мелкий бытовой ремонт – Врезка замков",
                    "Мелкий бытовой ремонт – Мелкие внутренние или уличные малярные работы",
@@ -49,7 +47,7 @@ with ui.column().classes('w-full items-center justify-center h-screen'):
         ui.button("Go").on_click(
             lambda: select_specialization("aimasterchooser", "europe-west3", inputField.value)).props('rounded')
 
-    responseLabel = ui.label(response)
+    responseLabel = ui.label("")
 
 ui.run(host="0.0.0.0", port=6969, dark=True, title="LLM Spec Chooser")
 # UI end
@@ -76,9 +74,9 @@ def select_specialization(project_id: str, location: str, prompt: str) -> str:
         ]
     )
 
-    print(output)
+    print(output.text)
     result = output.text
     if result not in specializations and result != "Error: No suitable spec found":
         result = "Error: No suitable spec found"
-    global response, responseLabel
+    global responseLabel
     responseLabel.text = result
