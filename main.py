@@ -7,23 +7,7 @@ from vertexai.generative_models import GenerativeModel
 from nicegui import ui
 
 response = ""
-with ui.column().classes('w-full items-center justify-center h-screen'):
-
-    ui.label("LLM Spec Chooser").style('font-size: 24px').style('font-weight: bold')
-    with ui.row():
-        inputField = ui.input(placeholder="Enter task...").props('rounded outlined dense')
-        ui.button("Go").on_click(lambda: select_specialization("aimasterchooser", "europe-west3", inputField.value)).props('rounded')
-
-    responseLabel = ui.label(response)
-
-ui.run(host="0.0.0.0", port=6969, dark=True, title="LLM Spec Chooser")
-
-def select_specialization(project_id: str, location: str, prompt: str) -> str:
-    print("PROMPT:" + prompt)
-    vertexai.init(project=project_id, location=location)
-    multimodal_model = GenerativeModel("gemini-pro-vision")
-
-    specializations = ["Мелкий бытовой ремонт – Врезка замков",
+specializations = ["Мелкий бытовой ремонт – Врезка замков",
                        "Мелкий бытовой ремонт – Мелкие внутренние или уличные малярные работы",
                        "Мелкий бытовой ремонт – Мелкие столярные работы",
                        "Мелкий бытовой ремонт – Мелкий ремонт напольных покрытий",
@@ -55,10 +39,26 @@ def select_specialization(project_id: str, location: str, prompt: str) -> str:
                        "Электрик – Устранение неисправностей в щитке",
                        "Электрик – Устранение скрытых неисправностей в проводке"]
 
-    prompt = (
-            "Из следующего списка специализаций разнорабочего выбери ту, которая лучше всего описывает задачу, и в качестве ответа дай только выбранную специализацию: "
-            + prompt + "\n\n")
+with ui.column().classes('w-full items-center justify-center h-screen'):
 
+    ui.label("LLM Spec Chooser").style('font-size: 24px').style('font-weight: bold')
+    with ui.row():
+        inputField = ui.input(placeholder="Enter task...").props('rounded outlined dense')
+        ui.button("Go").on_click(lambda: select_specialization("aimasterchooser", "europe-west3", inputField.value)).props('rounded')
+
+    responseLabel = ui.label(response)
+
+ui.run(host="0.0.0.0", port=6969, dark=True, title="LLM Spec Chooser")
+
+def select_specialization(project_id: str, location: str, prompt: str) -> str:
+    print("PROMPT:" + prompt)
+    vertexai.init(project=project_id, location=location)
+    multimodal_model = GenerativeModel("gemini-pro-vision")
+
+    prompt = (
+            f"Задача: \"{prompt}\"\nИз следующего списка специализаций разнорабочего выбери ту, которая лучше всего описывает задачу, и в качестве ответа дай только одну выбранную специализацию. Если ни одна специализация не подходит под задачу напиши \"Error: No suitable spec found\".\nСписок специализаций:\n")
+
+    global specializations
     for i in specializations:
         prompt += "- " + i + "\n"
 
@@ -72,6 +72,9 @@ def select_specialization(project_id: str, location: str, prompt: str) -> str:
     )
 
     print(output)
+    result = output.text
+    if result not in specializations and result != "Error: No suitable spec found":
+        result = "Error: No suitable spec found"
     global response, responseLabel
-    responseLabel.text = output.text
+    responseLabel.text = result
 
